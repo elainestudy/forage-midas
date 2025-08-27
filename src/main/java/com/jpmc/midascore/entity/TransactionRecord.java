@@ -3,6 +3,7 @@ package com.jpmc.midascore.entity;
 import jakarta.persistence.*;
 
 @Entity
+@SuppressWarnings("unused")
 public class TransactionRecord {
     @Id
     @GeneratedValue()
