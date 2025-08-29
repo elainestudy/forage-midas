@@ -1,5 +1,6 @@
 package com.jpmc.midascore.service;
 
+import com.jpmc.midascore.dto.Incentive;
 import com.jpmc.midascore.entity.TransactionRecord;
 import com.jpmc.midascore.entity.UserRecord;
 import com.jpmc.midascore.exception.InvalidTransactionException;
@@ -10,6 +11,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
@@ -19,11 +21,15 @@ public class TransactionService {
 
     private final UserRepository userRepository;
     private final TransactionRecordRepository transactionRecordRepository;
+    private final RestTemplate restTemplate;
+
+    private static final String INCENTIVE_API_URL = "http://localhost:8080/incentive";
 
     public TransactionService(UserRepository userRepository,
-                              TransactionRecordRepository transactionRecordRepository) {
+                              TransactionRecordRepository transactionRecordRepository, RestTemplate restTemplate) {
         this.userRepository = userRepository;
         this.transactionRecordRepository = transactionRecordRepository;
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -64,11 +70,17 @@ public class TransactionService {
             // process balance change
             sender.setBalance(sender.getBalance() - amount);
             recipient.setBalance(recipient.getBalance() + amount);
+
+            // fetch and apply incentive if applicable
+            float incentiveAmount = fetchIncentiveAmount(t);
+            recipient.setBalance(recipient.getBalance() + incentiveAmount);
+
+            // save sender's and recipient's balance
             userRepository.save(sender);
             userRepository.save(recipient);
 
             // save transaction
-            TransactionRecord transactionRecord = new TransactionRecord(sender, recipient, amount);
+            TransactionRecord transactionRecord = new TransactionRecord(sender, recipient, amount, incentiveAmount);
             transactionRecordRepository.save(transactionRecord);
             logger.info("Transaction processed successfully: {}", transactionRecord);
             return Optional.of(transactionRecord);
@@ -77,6 +89,47 @@ public class TransactionService {
             logger.warn("Transaction failed: {} -> {} | amount {} | reason: {}",
                     t.getSenderId(), t.getRecipientId(), t.getAmount(), e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Fetches the incentive amount for a given transaction from the Incentive API.
+     *
+     * <p>Business logic:
+     * <ul>
+     *     <li>Send a POST request with the {@link Transaction} object to the Incentive API</li>
+     *     <li>Deserialize the response into an {@link Incentive} object</li>
+     *     <li>Return the incentive amount (>= 0) or 0 if no incentive is returned</li>
+     * </ul>
+     *
+     * <p>If the API call fails or returns null, a warning is logged and 0 is returned.
+     *
+     * @param transaction the transaction to send to the Incentive API
+     * @return the incentive amount to apply to the recipient
+     */
+    private float fetchIncentiveAmount(Transaction transaction) {
+        try {
+            logger.info("Sending transaction to incentive API: {} -> {} | amount: {}", 
+                transaction.getSenderId(), transaction.getRecipientId(), transaction.getAmount());
+            
+            Incentive incentive = restTemplate.postForObject(INCENTIVE_API_URL, transaction, Incentive.class);
+            
+            logger.info("Raw response from incentive API: {}", incentive);
+            
+            if (incentive != null && incentive.getAmount() >= 0) {
+                logger.info("Fetched incentive for transaction {} -> {}: {}",
+                        transaction.getSenderId(), transaction.getRecipientId(), incentive.getAmount());
+                return incentive.getAmount();
+            } else {
+                logger.info("No incentive returned for transaction {} -> {}",
+                        transaction.getSenderId(), transaction.getRecipientId());
+                return 0f;
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to fetch incentive for transaction {} -> {}: {}",
+                    transaction.getSenderId(), transaction.getRecipientId(), e.getMessage());
+            logger.warn("Exception details:", e);
+            return 0f;
         }
     }
 }
