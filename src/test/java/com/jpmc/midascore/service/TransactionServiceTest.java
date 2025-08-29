@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -44,6 +45,15 @@ class TransactionServiceTest {
 
     // Defines the URL as a static constant.
     private static final String INCENTIVE_API_URL = "http://localhost:8080/incentive";
+
+    @BeforeEach
+    void setupUrl() {
+        ReflectionTestUtils.setField(
+                transactionService,
+                "incentiveApiUrl",
+                INCENTIVE_API_URL
+        );
+    }
     /**
      * Tests that a transaction is successfully processed when both sender and recipient exist
      * and sender has sufficient funds, without any incentive applied.

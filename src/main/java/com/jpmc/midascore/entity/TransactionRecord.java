@@ -81,6 +81,7 @@ public class TransactionRecord {
                 ", senderId=" + (sender != null ? sender.getId() : null) +
                 ", recipientId=" + (recipient != null ? recipient.getId() : null) +
                 ", amount=" + amount +
+                ", incentive=" + incentive +
                 '}';
     }
 }

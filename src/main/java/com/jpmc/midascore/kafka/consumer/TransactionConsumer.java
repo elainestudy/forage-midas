@@ -21,6 +21,6 @@ public class TransactionConsumer {
     public void consume(Transaction transaction) {
         logger.info("Consumed transaction: {}", transaction);
         transactionService.processTransaction(transaction)
-                .ifPresent(record -> System.out.println("Transaction recorded: " + record));
+                .ifPresent(record -> logger.info("Transaction recorded: {}", record));
     }
 }

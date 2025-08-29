@@ -10,6 +10,7 @@ import com.jpmc.midascore.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,7 +24,8 @@ public class TransactionService {
     private final TransactionRecordRepository transactionRecordRepository;
     private final RestTemplate restTemplate;
 
-    private static final String INCENTIVE_API_URL = "http://localhost:8080/incentive";
+    @Value("${incentive.api.url:http://localhost:8080/incentive}")
+    private String incentiveApiUrl;
 
     public TransactionService(UserRepository userRepository,
                               TransactionRecordRepository transactionRecordRepository, RestTemplate restTemplate) {
@@ -112,7 +114,7 @@ public class TransactionService {
             logger.info("Sending transaction to incentive API: {} -> {} | amount: {}", 
                 transaction.getSenderId(), transaction.getRecipientId(), transaction.getAmount());
             
-            Incentive incentive = restTemplate.postForObject(INCENTIVE_API_URL, transaction, Incentive.class);
+            Incentive incentive = restTemplate.postForObject(incentiveApiUrl, transaction, Incentive.class);
             
             logger.info("Raw response from incentive API: {}", incentive);
             

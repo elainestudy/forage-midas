@@ -1,3 +1,6 @@
+incentive:
+  api:
+    url: http://localhost:8080/incentive
 spring:
   kafka:
     bootstrap-servers: localhost:9092
@@ -12,3 +15,6 @@ spring:
 
 general:
   kafka-topic: my-test-topic
+
+server:
+  port: 33400
