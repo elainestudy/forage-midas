@@ -1,6 +1,6 @@
 # Midas Core
 
-A Spring Boot application built as part of the [JPMC Advanced Software Engineering Forage](https://www.theforage.com/) program. This project simulates a financial transaction processing system that consumes Kafka messages, validates and processes peer-to-peer transfers, integrates with an external incentive API, and exposes a REST endpoint for balance queries.
+A Spring Boot application built as part of the [JPMC Advanced Software Engineering Forage](https://www.theforage.com/simulations/jpmorgan/advanced-software-engineering-r0fm) program. This project simulates a financial transaction processing system that consumes Kafka messages, validates and processes peer-to-peer transfers, integrates with an external incentive API, and exposes a REST endpoint for balance queries.
 
 ## Branch Structure
 
